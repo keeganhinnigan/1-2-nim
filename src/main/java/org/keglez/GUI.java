@@ -10,7 +10,7 @@ import java.awt.event.TextEvent;
 /**
  * This class generates a GUI version of the 1-2 Nim game.
  */
-public class GUI
+public class GUI extends JFrame
 {
     private JFrame frame;
     private JPanel gamePanel;
@@ -20,11 +20,11 @@ public class GUI
     // ToolBar Features
     private JToolBar toolBar;
     private JButton newButton;
-    private JButton loadButton;
     private JButton saveButton;
     private JButton undoButton;
     private JComboBox gameMode;
 
+    private NimCanvas game; // Game instance.
 
     /**
      * This method will generate the main GUI for the game.
@@ -40,10 +40,9 @@ public class GUI
 
 
         // Setup game panel.
-        this.gamePanel = new JPanel();
-        this.gamePanel.setPreferredSize(new Dimension(500, 300));
-        this.gamePanel.setBackground(Color.WHITE);
-        this.gamePanel.setBorder(padding);
+        game = new NimCanvas(500, 400);
+        game.setBorder(padding);
+
 
         // Setup game log.
         this.gameLog = new TextArea("Welcome to 1-2 nim!\n");
@@ -53,14 +52,14 @@ public class GUI
         // Generate the frame.
         frame = new JFrame("1-2 Nim Game");
 
-
         // Add components.
+        frame.setJMenuBar(createMenuBar());
         createToolbarOptions();
         createGameModeSelector();
 
         // Frame components.
         frame.add(toolBar, BorderLayout.NORTH);
-        frame.add(gamePanel, BorderLayout.CENTER);
+        frame.add(game, BorderLayout.CENTER);
         frame.add(gameLog, BorderLayout.SOUTH);
 
         // Frame settings.
@@ -83,37 +82,36 @@ public class GUI
         optionPanel.setLayout(new GridLayout(2,1));
         optionPanel.setPreferredSize(new Dimension(350, 60));
 
-        JLabel optionLabel = new JLabel("Options");
+        JLabel optionLabel = new JLabel("Game Options");
         optionLabel.setBorder(this.padding);
 
 
         // Generate buttons.
         JPanel buttonContainer = new JPanel();
-        buttonContainer.setLayout(new GridLayout(1,4));
+        buttonContainer.setLayout(new GridLayout(1,5));
         buttonContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        this.newButton = new JButton("New");
-        this.loadButton = new JButton("Load");
-        this.saveButton = new JButton("Save");
-        this.undoButton = new JButton("Undo");
 
-        buttonContainer.add(newButton);
-        buttonContainer.add(loadButton);
-        buttonContainer.add(saveButton);
+        // Generate game option buttons.
+        JButton removeOneButton = new JButton("Remove 1");
+        buttonContainer.add(removeOneButton);
+
+        JButton removeTwoButton = new JButton("Remove 2");
+        buttonContainer.add(removeTwoButton);
+
+        JButton undoButton = new JButton("Undo");
         buttonContainer.add(undoButton);
 
+
+        // Setup option panel & add to toolbar.
         optionPanel.add(optionLabel);
         optionPanel.add(buttonContainer);
-
-        // Add options to the toolbar.
         this.toolBar.add(optionPanel);
 
 
-        // Action Listeners
-        newButton.addActionListener(e -> exitFrame());
-        loadButton.addActionListener(e -> exitFrame());
-        saveButton.addActionListener(e -> exitFrame());
-        undoButton.addActionListener(e -> exitFrame());
+        // Add action listeners.
+        removeOneButton.addActionListener(e -> this.game.removeMatchStick(1));
+        removeTwoButton.addActionListener(e -> this.game.removeMatchStick(2));
     }
 
     /**
@@ -144,22 +142,84 @@ public class GUI
 
 
     /**
-     * Display the game graphics.
+     * Creates the menu bar with "File" and "Options" menus.
+     * @return the JMenuBar for the frame
      */
-    private void gameView()
-    {
-        JPanel game = new JPanel();
+    private JMenuBar createMenuBar() {
 
-        game.setPreferredSize(new Dimension(500, 500));
-        game.setBorder(this.padding);
+        // Create method attributes.
+        JMenuBar menuBar = new JMenuBar();
+        menuBar.setOpaque(false);
 
-        this.frame.add(game, BorderLayout.CENTER);
+        // Create file menu.
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem newGameItem = new JMenuItem("New Game");
+        JMenuItem loadGameItem = new JMenuItem("Load Game");
+        JMenuItem saveItem = new JMenuItem("Save");
+        JMenuItem exitItem = new JMenuItem("Exit");
+
+        // Add action listeners to each menu item.
+        newGameItem.addActionListener(e -> startNewGame());
+        loadGameItem.addActionListener(e -> startNewGame());
+        saveItem.addActionListener(e -> saveGame());
+        exitItem.addActionListener(e -> exitGame());  // Exit the application
+
+        // Add items to the file menu.
+        fileMenu.add(newGameItem);
+        fileMenu.add(saveItem);
+        fileMenu.addSeparator();  // Adds a separator line
+        fileMenu.add(exitItem);
+
+
+        // Create options menu.
+        JMenu optionsMenu = new JMenu("Options");
+        JMenuItem settingsItem = new JMenuItem("Settings");
+        JMenuItem helpItem = new JMenuItem("Help");
+
+        // Add action listeners to each menu item.
+        settingsItem.addActionListener(e -> openSettings());
+        helpItem.addActionListener(e -> showHelp());
+
+        // Add items to the options menu.
+        optionsMenu.add(settingsItem);
+        optionsMenu.add(helpItem);
+
+
+        // Add the menus to the menu bar.
+        menuBar.add(fileMenu);
+        menuBar.add(optionsMenu);
+
+
+        // Return the menu bar.
+        return menuBar;
     }
 
+
+    // Placeholder methods for menu actions
+    private void startNewGame() {
+        JOptionPane.showMessageDialog(this, "Starting a new game!");
+    }
+
+
+    private void saveGame() {
+        JOptionPane.showMessageDialog(this, "Game saved successfully!");
+    }
+
+
+    private void openSettings() {
+        JOptionPane.showMessageDialog(this, "Open settings dialog...");
+    }
+
+
+    private void showHelp() {
+        JOptionPane.showMessageDialog(this, "Help dialog...");
+    }
+
+
     /**
-     * Exit the application.
+     * Exit the game.
      */
-    public void exitFrame()
+    public void exitGame()
     {
         frame.dispose();
     }
