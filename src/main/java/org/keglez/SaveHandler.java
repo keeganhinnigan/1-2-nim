@@ -108,6 +108,10 @@ public class SaveHandler
             // Start new row.
             System.out.println();
         }
+
+        System.out.print("\nChoose an option: ");
+        System.out.print("\n[E] Exit ");
+        System.out.print("\n[ID] Choose a game ID ");
     }
 
 
@@ -142,7 +146,7 @@ public class SaveHandler
      * Adds a new row of game data to the saves.csv file based on parameters given.
      * @throws IOException If there is an issue appending to the file.
      */
-    public void appendSaveData() throws IOException
+    public void append(String[] saveData) throws IOException
     {
         // Load the save file.
         File file = new File(this.filepath);
@@ -156,10 +160,10 @@ public class SaveHandler
         String[] data = new String[5];
 
         data[0] = countLines(file).toString(); // Id.
-        data[1] = fileDate;
-        data[2] = "10";
-        data[3] = "true";
-        data[4] = "[1:2:1:2:1:2:1]";
+        data[1] = fileDate; // Set a date.
+        data[2] = saveData[0]; // Marble size.
+        data[3] = saveData[1]; // Human turn.
+        data[4] = saveData[2]; // Moves.
 
 
         // Write the data, split with delimiter.

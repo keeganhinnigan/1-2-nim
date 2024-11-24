@@ -3,7 +3,7 @@ package org.keglez;
 import java.io.IOException;
 import java.util.Scanner;
 
-public class NimCLI
+public class NimCLI extends NimController
 {
     // Global Attributes
     private NimGame game;
@@ -87,16 +87,23 @@ public class NimCLI
      *      <li>When there is a winner, announce the winner.</li>
      *  </ul>
      */
-    private void startGame() throws IOException
+    public void startGame()
     {
         System.out.println("\nInitial number of marbles: " + game.getMarbleSize());
         displayMarbles();
 
 
         // While there is no winner, display the menu.
-        while (!game.checkWinner())
+        try
         {
-            displayMenu();
+            while (!game.checkWinner())
+            {
+                displayMenu();
+            }
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
         }
 
 
@@ -119,29 +126,49 @@ public class NimCLI
             + "[Q] Quit game\n");
 
         String choice = reader.nextLine().toUpperCase();
-        switch (choice) {
+
+        switch (choice)
+        {
             case "M":
                 makeMove();
                 break;
+
             case "S":
-                game.saveGame();
+                System.out.println(game.saveGame());
                 break;
+
             case "L":
-                game.loadGame();
+                // Display the console menu.
+                game.saveData.displaySaveData();
+
+                // Get the user input and load the game.
+                int scanId = new Scanner(System.in).nextInt();
+                System.out.println(game.loadGame(scanId));
+
+                // Display number of marbles.
+                System.out.println();
                 displayMarbles();
+
                 break;
+
             case "U":
-                game.undoLastMove();
+                System.out.println(game.undoLastMove());
                 displayMarbles();
+
                 break;
+
             case "C":
-                game.resetGame();
+                System.out.println(game.resetGame());
                 displayMarbles();
+
                 break;
+
             case "Q":
                 System.out.println("Thank you for playing! Exiting game...");
                 System.exit(0);
+
                 break;
+
             default:
                 System.out.println("Invalid choice. Please select again.");
         }
@@ -150,8 +177,9 @@ public class NimCLI
 
     /**
      * Handle making a move for the human or computer player
-     */ 
-    private void makeMove()
+     */
+    @Override
+    public void makeMove()
     {
         if (game.isHumanTurn())
         {
@@ -178,7 +206,8 @@ public class NimCLI
      * The next player to take marbles.
      * @param player - the player who turn it is next.
      */
-    private void assignMoveFrom(Player player)
+    @Override
+    public void assignMoveFrom(Player player)
     {
         System.out.println("\nIt is " + player.getName() + "'s turn to play.");
 
@@ -221,7 +250,8 @@ public class NimCLI
      *     <li>if it is the computers turn, the human wins.</li>
      * </ul>
      */
-    private void announceWinner()
+    @Override
+    public void announceWinner()
     {
         String winnerName;
 
@@ -246,8 +276,15 @@ public class NimCLI
      * <p>Starts the CLI nim game.</p>
      * @param args program parameters.
      */
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args)
     {
-        NimCLI textUi = new NimCLI();
+        try
+        {
+            NimCLI textUi = new NimCLI();
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
     }
 }

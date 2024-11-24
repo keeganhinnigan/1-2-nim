@@ -12,7 +12,7 @@ import java.util.Scanner;
  */
 public class NimGame
 {
-    private SaveHandler saveData;
+    public SaveHandler saveData;
 
     private Player humanPlayer;
     private Player computerPlayer;
@@ -70,9 +70,20 @@ public class NimGame
      * state into the save file.
      * @throws IOException File error occurred.
      */
-    public void saveGame() throws IOException
+    public String saveGame() throws IOException
     {
-        saveData.appendSaveData();
+        // Cast attributes to string object.
+        String marble = String.valueOf(this.marbleSize);
+        String human  = String.valueOf(this.isHumanTurn);
+
+        // Use StringBuilder for efficiency.
+        StringBuilder move = new StringBuilder();
+        for (Integer integer : this.moves) move.append(integer);
+
+        // Append save data. Parse as a string array.
+        saveData.append(new String[]{marble, human, move.toString()});
+
+        return "Game saved successfully!";
     }
 
 
@@ -80,58 +91,54 @@ public class NimGame
      * Loads a game from the save data based on the user input.
      * @throws IOException An issue occurred reading the save file.
      */
-    public void loadGame() throws IOException
+    public String loadGame(int id) throws IOException
     {
-        Scanner reader = new Scanner(System.in);
-        saveData.displaySaveData();
-
-        System.out.println("\nChoose an ID: ");
-        int id = reader.nextInt();
-
+        // Load the game from the ID.
         String[] game = saveData.loadGame(id); // :3
-        game[4] = game[4].replaceAll("/[^a-zA-Z0-9 ]/g", "");
-        System.out.println("Chosen Game: " + Arrays.toString(game) + "\n");
 
-        int marbles = Integer.parseInt(game[2]);
-        boolean human = Boolean.parseBoolean(game[3]);
-        int[] moves = new int[game[4].length()];
+        // Re-Initialize Game Variables.
+        this.marbleSize = Integer.parseInt(game[2]);
+        this.isHumanTurn = Boolean.parseBoolean(game[3]);
+
+        // Add all the moves to the moves list.
+        this.moves.clear();
 
         for (int i = 0; i < game[4].length(); i++)
         {
-            System.out.println(game[4].charAt(i));
+            Integer move = Character.getNumericValue(game[4].charAt(i));
+            this.moves.add(move);
         }
 
-        for(int i = 0; i < moves.length; i++)
-        {
-            moves[i] = Integer.parseInt("" + game[4].charAt(i));
-        }
-
-
-        System.out.println();
-        System.out.println("Marbles: " + marbles);
-        System.out.println("Human: " + human);
-        System.out.println("Moves: " + Arrays.toString(moves));
-
+        return "Game loaded successfully!";
     }
 
 
     /**
      * Resets the game to its default state.
      */
-    public void resetGame()
+    public String resetGame()
     {
         this.marbleSize = 10;
         this.isHumanTurn = true;
         this.moves.clear();
+
+        return "Game has been reset!";
     }
 
 
     /**
      * Undo the last move the user took.
      */
-    public void undoLastMove()
+    public String undoLastMove()
     {
-        System.out.println("Code not yet implemented \n");
+        for (int i = 0; i < 2; i++)
+        {
+            this.marbleSize += this.moves.getLast();
+            this.moves.removeLast();
+            this.isHumanTurn = true;
+        }
+
+        return "Last move has been erased!";
     }
 
 
@@ -163,6 +170,27 @@ public class NimGame
     public boolean isHumanTurn()
     {
         return isHumanTurn;
+    }
+
+    public void setHumanTurn(boolean set)
+    {
+        this.isHumanTurn = set;
+    }
+
+    /**
+     * Gets the name of the current player.
+     * @return The players name.
+     */
+    public String getCurrentPlayerName()
+    {
+        if (!getIsHumanTurn())
+        {
+            return "Human";
+        }
+        else
+        {
+            return "Computer";
+        }
     }
 
 }

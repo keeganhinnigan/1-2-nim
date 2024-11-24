@@ -3,6 +3,9 @@ package org.keglez;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.ArrayList;
 
 
@@ -11,9 +14,9 @@ import java.util.ArrayList;
  */
 public class NimGUI extends JFrame
 {
-    private JFrame frame;
     private JPanel gamePanel;
-    private Border padding;
+    private final JFrame frame;
+    private final Border padding;
     private TextArea gameLog;
 
     // ToolBar Features
@@ -23,13 +26,37 @@ public class NimGUI extends JFrame
     private JButton undoButton;
     private JComboBox gameMode;
 
-    private NimCanvas game; // Game instance.
+    private NimCanvas   nim; // Game instance.
+    private NimGame     game;
+
+
+    /**
+     * Append a new message to the game log.
+     * @param message To be displayed on the game log.
+     */
+    public void setGameLog(String message)
+    {
+        this.gameLog.append("\n" + message);
+    }
+
+    private void startGame()
+    {
+        // Setup players.
+        Player player1 = new Player("Human", new HumanUserStrategy());
+        Player player2 = new Player("Computer", new RandomStrategy());
+
+        // Initialize the game.
+        this.game = new NimGame(player1, player2);
+        game.setHumanTurn(true);
+    }
 
     /**
      * This method will generate the main GUI for the game.
      */
     public NimGUI()
     {
+        startGame();
+
         // Set default padding.
         this.padding = BorderFactory.createEmptyBorder(5,5,5,5);
 
@@ -39,12 +66,12 @@ public class NimGUI extends JFrame
 
 
         // Setup game panel.
-        game = new NimCanvas(500, 400);
-        game.setBorder(padding);
+        nim = new NimCanvas(500, 400);
+        nim.setBorder(padding);
 
 
         // Setup game log.
-        this.gameLog = new TextArea("Welcome to 1-2 nim!\n");
+        this.gameLog = new TextArea("Welcome to 1-2 nim!");
         this.gameLog.setPreferredSize(new Dimension(500, 100));
         this.gameLog.setEditable(false);
 
@@ -58,7 +85,7 @@ public class NimGUI extends JFrame
 
         // Frame components.
         frame.add(toolBar, BorderLayout.NORTH);
-        frame.add(game, BorderLayout.CENTER);
+        frame.add(nim, BorderLayout.CENTER);
         frame.add(gameLog, BorderLayout.SOUTH);
 
         // Frame settings.
@@ -67,6 +94,7 @@ public class NimGUI extends JFrame
         frame.pack();
         frame.setVisible(true);
     }
+
 
     /**
      *  Generates all the toolbar options for the game. Users
@@ -108,10 +136,71 @@ public class NimGUI extends JFrame
         this.toolBar.add(optionPanel);
 
 
-        // Add action listeners.
-        removeOneButton.addActionListener(e -> this.game.removeMatchStick(1));
-        removeTwoButton.addActionListener(e -> this.game.removeMatchStick(2));
+        /*
+         *  Remove 1 matchstick and create a log.
+         */
+        removeOneButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                makeMove(1);
+            }
+        });
+
+        /*
+         *  Remove 2 matchsticks and create a log.
+         */
+        removeTwoButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                makeMove(2);
+            }
+        });
     }
+
+
+    public void makeMove(int amount)
+    {
+        if (game.isHumanTurn())
+        {
+            game.setHumanTurn(true);
+
+            game.assignMove(amount);
+            nim.removeMatchStick(amount);
+
+            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + amount + " marbles.");
+
+            makeMove(0); // Start computer turn.
+        }
+        else
+        {
+            game.setHumanTurn(false);
+
+            int move = game.getComputerPlayer().getMove(game.getMarbleSize());
+            game.assignMove(move);
+            nim.removeMatchStick(move);
+
+            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + move + " marbles.");
+
+        }
+    }
+
+
+    /**
+     * The next player to take marbles.
+     * @param player - the player who turn it is next.
+     */
+    public int assignMoveFrom(Player player)
+    {
+        int move = 0;
+
+
+        return move;
+    }
+
 
     /**
      * Generates a game mode combo box. Allows the user to choose
