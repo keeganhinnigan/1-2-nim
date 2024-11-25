@@ -19,6 +19,7 @@ public class Player
         this.strategy = strategy;
     }
 
+
     public int getMove(int currentPileSize)
     {
         return strategy.NextMove(currentPileSize);

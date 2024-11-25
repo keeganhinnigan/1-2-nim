@@ -59,6 +59,26 @@ public class SaveHandler
         return this.saveData.get(id);
     }
 
+    /**
+     * Returns the save data ArrayList
+     * @return ArrayList
+     */
+    public ArrayList<String[]> returnSaveData()
+    {
+        if (this.saveData == null)
+        {
+            try
+            {
+                getSaveData();
+            }
+            catch (IOException error)
+            {
+                System.out.println(error.getMessage());
+            }
+        }
+
+        return this.saveData;
+    }
 
     /**
      * Gets the save data from the save file and stores each row
@@ -163,8 +183,15 @@ public class SaveHandler
         data[1] = fileDate; // Set a date.
         data[2] = saveData[0]; // Marble size.
         data[3] = saveData[1]; // Human turn.
-        data[4] = saveData[2]; // Moves.
 
+        if (saveData[2].isEmpty())
+        {
+            data[4] = "0"; // Moves.
+        }
+        else
+        {
+            data[4] = saveData[2];
+        }
 
         // Write the data, split with delimiter.
         try (FileWriter writer = new FileWriter(file, true))

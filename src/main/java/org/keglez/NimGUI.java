@@ -1,12 +1,17 @@
 package org.keglez;
 
+import org.keglez.nimgui.GameLoaderGUI;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -25,6 +30,9 @@ public class NimGUI extends JFrame
     private JButton saveButton;
     private JButton undoButton;
     private JComboBox gameMode;
+    private JButton removeOneButton;
+    private JButton removeTwoButton;
+
 
     private NimCanvas   nim; // Game instance.
     private NimGame     game;
@@ -120,10 +128,10 @@ public class NimGUI extends JFrame
 
 
         // Generate game option buttons.
-        JButton removeOneButton = new JButton("Remove 1");
+        removeOneButton = new JButton("Remove 1");
         buttonContainer.add(removeOneButton);
 
-        JButton removeTwoButton = new JButton("Remove 2");
+        removeTwoButton = new JButton("Remove 2");
         buttonContainer.add(removeTwoButton);
 
         JButton undoButton = new JButton("Undo");
@@ -162,6 +170,10 @@ public class NimGUI extends JFrame
     }
 
 
+    /**
+     * Make a move.
+     * @param amount Number of matchsticks to remove.
+     */
     public void makeMove(int amount)
     {
         if (game.isHumanTurn())
@@ -173,7 +185,17 @@ public class NimGUI extends JFrame
 
             this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + amount + " marbles.");
 
-            makeMove(0); // Start computer turn.
+            // Make sure that the user cannot remove two matchsticks
+            // if there is one left.
+            if(game.getMarbleSize() == 1)
+            {
+                this.removeTwoButton.setEnabled(false);
+            }
+
+            // Check if human is a winner.
+            if(game.checkWinner()) nim.setWinner("Human");
+            else makeMove(0);
+
         }
         else
         {
@@ -181,25 +203,29 @@ public class NimGUI extends JFrame
 
             int move = game.getComputerPlayer().getMove(game.getMarbleSize());
             game.assignMove(move);
+
+            // Delay the computer.
+
             nim.removeMatchStick(move);
+
+            // Make sure that the user cannot remove two matchsticks
+            // if there is one left.
+            if (game.getMarbleSize() == 1) {
+                this.removeTwoButton.setEnabled(false);
+            }
 
             this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + move + " marbles.");
 
+            // Check if human is a winner.
+            if (game.checkWinner())
+            {
+                nim.setWinner("Computer");
+            }
         }
     }
 
 
-    /**
-     * The next player to take marbles.
-     * @param player - the player who turn it is next.
-     */
-    public int assignMoveFrom(Player player)
-    {
-        int move = 0;
 
-
-        return move;
-    }
 
 
     /**
@@ -233,11 +259,12 @@ public class NimGUI extends JFrame
      * Creates the menu bar with "File" and "Options" menus.
      * @return the JMenuBar for the frame
      */
-    private JMenuBar createMenuBar() {
-
+    private JMenuBar createMenuBar()
+    {
         // Create method attributes.
         JMenuBar menuBar = new JMenuBar();
         menuBar.setOpaque(false);
+
 
         // Create file menu.
         JMenu fileMenu = new JMenu("File");
@@ -246,61 +273,114 @@ public class NimGUI extends JFrame
         JMenuItem saveItem = new JMenuItem("Save");
         JMenuItem exitItem = new JMenuItem("Exit");
 
+
         // Add action listeners to each menu item.
         newGameItem.addActionListener(e -> startNewGame());
-        loadGameItem.addActionListener(e -> startNewGame());
+        loadGameItem.addActionListener(e -> loadGame());
         saveItem.addActionListener(e -> saveGame());
         exitItem.addActionListener(e -> exitGame());  // Exit the application
 
+
         // Add items to the file menu.
         fileMenu.add(newGameItem);
+        fileMenu.add(loadGameItem);
         fileMenu.add(saveItem);
         fileMenu.addSeparator();  // Adds a separator line
         fileMenu.add(exitItem);
 
-
-        // Create options menu.
-        JMenu optionsMenu = new JMenu("Options");
-        JMenuItem settingsItem = new JMenuItem("Settings");
-        JMenuItem helpItem = new JMenuItem("Help");
-
-        // Add action listeners to each menu item.
-        settingsItem.addActionListener(e -> openSettings());
-        helpItem.addActionListener(e -> showHelp());
-
-        // Add items to the options menu.
-        optionsMenu.add(settingsItem);
-        optionsMenu.add(helpItem);
-
-
         // Add the menus to the menu bar.
         menuBar.add(fileMenu);
-        menuBar.add(optionsMenu);
-
 
         // Return the menu bar.
         return menuBar;
     }
 
 
-    // Placeholder methods for menu actions
-    private void startNewGame() {
-        JOptionPane.showMessageDialog(this, "Starting a new game!");
+    /**
+     * This method starts a new game.
+     */
+    private void startNewGame()
+    {
+        try
+        {
+            game.resetGame();
+            nim.load(10);
+            gameLog.append("\nStarted new game!");
+        }
+        catch (Exception error)
+        {
+            System.out.println("Error starting new game:");
+            System.out.println(error.getMessage());
+        }
     }
 
 
-    private void saveGame() {
-        JOptionPane.showMessageDialog(this, "Game saved successfully!");
+    /**
+     *  This method opens the load game popup menu.
+     */
+    private void loadGame()
+    {
+        try
+        {
+            GameLoaderGUI loader = new GameLoaderGUI();
+
+            if (loader.getSave() > 0)
+            {
+                int id = loader.getSave();
+                this.game.loadGame(id);
+
+                // Manage canvas.
+                int matchsticks = game.getMarbleSize();
+                this.nim.load(matchsticks);
+
+                this.gameLog.append("\nLoaded save " + id + ".");
+            }
+            else
+            {
+                this.gameLog.append("\nNo save chosen.");
+            }
+        }
+        catch (Exception e)
+        {
+            System.out.println("Error loading game:");
+            System.out.println(e.getMessage());
+        }
     }
 
 
-    private void openSettings() {
-        JOptionPane.showMessageDialog(this, "Open settings dialog...");
+    /**
+     * This method saves the current game.
+     */
+    private void saveGame()
+    {
+        try
+        {
+            this.game.saveGame();
+            JOptionPane.showMessageDialog(this, "Game saved successfully!");
+        }
+        catch (IOException error)
+        {
+            System.out.println("Error saving the game:");
+            System.out.println(error.getMessage());
+        }
     }
 
 
-    private void showHelp() {
-        JOptionPane.showMessageDialog(this, "Help dialog...");
+    /**
+     * Undo the last move made by the user and computer.
+     */
+    private void undoLastMove()
+    {
+        // Add code...
+    }
+
+
+    /**
+     * Sets the game mode/computer strategy.
+     */
+    private void setGameMode()
+    {
+        // Add code...
     }
 
 
@@ -309,7 +389,16 @@ public class NimGUI extends JFrame
      */
     public void exitGame()
     {
-        frame.dispose();
+        try
+        {
+            frame.dispose();
+            System.exit(0);
+        }
+        catch (Exception error)
+        {
+            System.out.println("Error exiting game:");
+            System.out.println(error.getMessage());
+        }
     }
 
 
@@ -353,7 +442,6 @@ public class NimGUI extends JFrame
             setPreferredSize(new Dimension(width, height));
         }
 
-
         /**
          *  This will generate match sticks.
          */
@@ -385,7 +473,11 @@ public class NimGUI extends JFrame
                 }
             }
         }
-
+        private String winner = "";
+        public void setWinner(String name)
+        {
+            this.winner = name;
+        }
 
         /**
          * Renders the scene in its current state.
@@ -411,14 +503,13 @@ public class NimGUI extends JFrame
             graphics.drawString("Matchsticks: " + this.matchSticks.size(), 10, 30);
 
 
-            // Draw winner text.
-            if(this.matchSticks.isEmpty())
+            // Check if a winner has been found.
+            if(!this.winner.isEmpty())
             {
-                graphics.setColor(Color.YELLOW);
-                graphics.setFont(new Font("Arial", Font.BOLD, 30));
-                graphics.drawString("Human is the winner!", (width/4)-30, height/2);
+                this.graphics.setColor(Color.YELLOW);
+                this.graphics.setFont(new Font("Arial", Font.BOLD, 30));
+                this.graphics.drawString(this.winner + " is the winner!", (width/4)-30, height/2);
             }
-
 
             // Draw all match sticks in the match stick list.
             for (MatchStick stick : this.matchSticks)
@@ -457,6 +548,18 @@ public class NimGUI extends JFrame
             // Bottom of the match.
             this.graphics.setColor(new Color(255,255,185)); // Beige
             this.graphics.fillRect(xPosition, yPosition+10, 6, 50);
+        }
+
+        public void load(int matchsticks)
+        {
+            // Generate new set of matchsticks.
+            generateMatchSticks();
+
+            // Remove matchsticks.
+            removeMatchStick(10 - matchsticks);
+
+            // Repaint the canvas.
+            repaint();
         }
 
 

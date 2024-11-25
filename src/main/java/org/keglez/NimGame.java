@@ -93,6 +93,9 @@ public class NimGame
      */
     public String loadGame(int id) throws IOException
     {
+        // Make sure save data exists.
+        saveData.getSaveData();
+
         // Load the game from the ID.
         String[] game = saveData.loadGame(id); // :3
 
