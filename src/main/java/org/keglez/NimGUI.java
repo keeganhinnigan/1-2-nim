@@ -8,10 +8,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -29,7 +26,6 @@ public class NimGUI extends JFrame
     private JButton newButton;
     private JButton saveButton;
     private JButton undoButton;
-    private JComboBox gameMode;
     private JButton removeOneButton;
     private JButton removeTwoButton;
 
@@ -96,6 +92,13 @@ public class NimGUI extends JFrame
         frame.add(nim, BorderLayout.CENTER);
         frame.add(gameLog, BorderLayout.SOUTH);
 
+
+        // Disable the undo button on fresh launch.
+        setUndoButton();
+
+        // Set the default game mode to easy.
+        setGameMode(GameMode.EASY);
+
         // Frame settings.
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
@@ -127,105 +130,29 @@ public class NimGUI extends JFrame
         buttonContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 
-        // Generate game option buttons.
-        removeOneButton = new JButton("Remove 1");
-        buttonContainer.add(removeOneButton);
+        // Remove one match stick button.
+        this.removeOneButton = new JButton("Remove 1");
+        this.removeOneButton.addActionListener(e -> makeMove(1));
+        buttonContainer.add(this.removeOneButton);
 
-        removeTwoButton = new JButton("Remove 2");
-        buttonContainer.add(removeTwoButton);
 
-        JButton undoButton = new JButton("Undo");
-        buttonContainer.add(undoButton);
+        // Remove two match sticks button.
+        this.removeTwoButton = new JButton("Remove 2");
+        this.removeTwoButton.addActionListener(e -> makeMove(2));
+        buttonContainer.add(this.removeTwoButton);
+
+
+        // Undo move button.
+        this.undoButton = new JButton("Undo");
+        this.undoButton.addActionListener(e -> undoLastMove());
+        buttonContainer.add(this.undoButton);
 
 
         // Setup option panel & add to toolbar.
         optionPanel.add(optionLabel);
         optionPanel.add(buttonContainer);
         this.toolBar.add(optionPanel);
-
-
-        /*
-         *  Remove 1 matchstick and create a log.
-         */
-        removeOneButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                makeMove(1);
-            }
-        });
-
-        /*
-         *  Remove 2 matchsticks and create a log.
-         */
-        removeTwoButton.addActionListener(new ActionListener()
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                makeMove(2);
-            }
-        });
     }
-
-
-    /**
-     * Make a move.
-     * @param amount Number of matchsticks to remove.
-     */
-    public void makeMove(int amount)
-    {
-        if (game.isHumanTurn())
-        {
-            game.setHumanTurn(true);
-
-            game.assignMove(amount);
-            nim.removeMatchStick(amount);
-
-            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + amount + " marbles.");
-
-            // Make sure that the user cannot remove two matchsticks
-            // if there is one left.
-            if(game.getMarbleSize() == 1)
-            {
-                this.removeTwoButton.setEnabled(false);
-            }
-
-            // Check if human is a winner.
-            if(game.checkWinner()) nim.setWinner("Human");
-            else makeMove(0);
-
-        }
-        else
-        {
-            game.setHumanTurn(false);
-
-            int move = game.getComputerPlayer().getMove(game.getMarbleSize());
-            game.assignMove(move);
-
-            // Delay the computer.
-
-            nim.removeMatchStick(move);
-
-            // Make sure that the user cannot remove two matchsticks
-            // if there is one left.
-            if (game.getMarbleSize() == 1) {
-                this.removeTwoButton.setEnabled(false);
-            }
-
-            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + move + " marbles.");
-
-            // Check if human is a winner.
-            if (game.checkWinner())
-            {
-                nim.setWinner("Computer");
-            }
-        }
-    }
-
-
-
 
 
     /**
@@ -245,11 +172,32 @@ public class NimGUI extends JFrame
         JLabel textPane = new JLabel("Game Mode");
         textPane.setBorder(this.padding);
 
-        String[] selection = {"Easy", "Hard"};
-        this.gameMode = new JComboBox(selection);
+        // Setup Combo Box
+        JComboBox<String> gameMode = new JComboBox<>();
+        gameMode.addItem("Easy");
+        gameMode.addItem("Hard");
+
+        gameMode.addActionListener(e ->
+        {
+            String s = (String) gameMode.getSelectedItem();
+
+            switch (s)
+            {
+                case "Easy":
+                    setGameMode(GameMode.EASY);
+                    break;
+                case "Hard":
+                    setGameMode(GameMode.HARD);
+                    break;
+                case null:
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + s);
+            }
+        });
 
         gameModeSelector.add(textPane);
-        gameModeSelector.add(this.gameMode);
+        gameModeSelector.add(gameMode);
 
         this.toolBar.add(gameModeSelector);
     }
@@ -297,15 +245,94 @@ public class NimGUI extends JFrame
 
 
     /**
+     * Make a move.
+     * @param amount Number of matchsticks to remove.
+     */
+    public void makeMove(int amount)
+    {
+        if (game.isHumanTurn())
+        {
+            game.setHumanTurn(true);
+
+            game.assignMove(amount);
+            nim.removeMatchStick(amount);
+
+            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + amount + " marbles.");
+
+            // Make sure that the user cannot remove two matchsticks
+            // if there is one left.
+            if(game.getMarbleSize() == 1)
+            {
+                this.removeTwoButton.setEnabled(false);
+            }
+
+            // Check if human is a winner.
+            if(game.checkWinner())
+            {
+                nim.setWinner("Human");
+                this.removeOneButton.setEnabled(false);
+                this.removeTwoButton.setEnabled(false);
+            }
+            else
+            {
+                makeMove(0);
+            }
+
+        }
+        else
+        {
+            game.setHumanTurn(false);
+
+            int move = game.getComputerPlayer().getMove(game.getMarbleSize());
+            game.assignMove(move);
+
+            // Delay the computer.
+
+            nim.removeMatchStick(move);
+
+            // Make sure that the user cannot remove two matchsticks
+            // if there is one left.
+            if (game.getMarbleSize() == 1)
+            {
+                this.removeTwoButton.setEnabled(false);
+            }
+
+            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + move + " marbles.");
+
+            // Check if human is a winner.
+            if (game.checkWinner())
+            {
+                nim.setWinner("Computer");
+                this.removeOneButton.setEnabled(false);
+                this.removeTwoButton.setEnabled(false);
+            }
+        }
+
+        // Check if the undo button should be enabled after making move.
+        setUndoButton();
+    }
+
+
+    /**
      * This method starts a new game.
      */
     private void startNewGame()
     {
         try
         {
+            // Reset the game and manage graphics.
             game.resetGame();
+            setGameMode(GameMode.EASY);
             nim.load(10);
+            nim.setWinner("");
+
+            // Notify of new game to the game log.
             gameLog.append("\nStarted new game!");
+
+            // Set button states.
+            this.removeOneButton.setEnabled(true);
+            this.removeTwoButton.setEnabled(true);
+            this.setUndoButton();
         }
         catch (Exception error)
         {
@@ -322,10 +349,13 @@ public class NimGUI extends JFrame
     {
         try
         {
+            // Initialize a new game loader menu.
             GameLoaderGUI loader = new GameLoaderGUI();
 
+            // If a save was chosen, continue.
             if (loader.getSave() > 0)
             {
+                // Load the game by its ID.
                 int id = loader.getSave();
                 this.game.loadGame(id);
 
@@ -333,10 +363,15 @@ public class NimGUI extends JFrame
                 int matchsticks = game.getMarbleSize();
                 this.nim.load(matchsticks);
 
+                // Notify of loaded save to the game log.
                 this.gameLog.append("\nLoaded save " + id + ".");
+
+                // Set the undo button to its correct state.
+                this.setUndoButton();
             }
             else
             {
+                // Notify that there was no save chosen to the game log.
                 this.gameLog.append("\nNo save chosen.");
             }
         }
@@ -365,22 +400,82 @@ public class NimGUI extends JFrame
         }
     }
 
+    /**
+     * If there are 10 piles, disable the undo button.
+     * If there are less than 10 piles, enable the undo button.
+     * If there are 0 piles, disable the undo button.
+     */
+    private void setUndoButton()
+    {
+        int pileSize = game.getMarbleSize();
+
+        switch (pileSize)
+        {
+            case 0, 10:
+                this.undoButton.setEnabled(false);
+                break;
+            default:
+                this.undoButton.setEnabled(true);
+        }
+    }
 
     /**
      * Undo the last move made by the user and computer.
      */
     private void undoLastMove()
     {
-        // Add code...
+        try
+        {
+            // Call undo function and get new matchstick size.
+            game.undoLastMove();
+            int pileSize = game.getMarbleSize();
+
+            // Enable the undo button if the pile size is less than 10.
+            setUndoButton();
+
+            // Update the game graphics.
+            nim.load(pileSize);
+        }
+        catch (Exception error)
+        {
+            System.out.println("Error undoing last move:");
+            System.out.println(error.getMessage());
+        }
     }
 
 
     /**
      * Sets the game mode/computer strategy.
      */
-    private void setGameMode()
+    private void setGameMode(GameMode gameMode)
     {
-        // Add code...
+        // Initialize a new strategy.
+        MoveStrategy strategy;
+
+        // Check game mode, and set appropriate strategy.
+        switch (gameMode)
+        {
+            case GameMode.EASY:
+                strategy = new YourStrategy();
+                this.gameLog.append("\nSet game mode to easy.");
+                break;
+
+            case MEDIUM:
+                strategy = new RandomStrategy();
+                this.gameLog.append("\nSet game mode to medium.");
+                break;
+
+            case HARD:
+                strategy = new RandomStrategy();
+                this.gameLog.append("\nSet game mode to hard.");
+                break;
+
+            default:
+                throw new IllegalStateException("Unexpected value: " + gameMode);
+        }
+
+        // Set the new computer player strategy.
+        game.setComputerPlayerStrategy(strategy);
     }
 
 

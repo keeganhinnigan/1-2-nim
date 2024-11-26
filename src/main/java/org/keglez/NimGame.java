@@ -1,11 +1,8 @@
 package org.keglez;
 
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Scanner;
 
 /**
  * This class controls the functions of the Nim game.
@@ -160,6 +157,11 @@ public class NimGame
         return computerPlayer;
     }
 
+    public void setComputerPlayerStrategy(MoveStrategy strategy)
+    {
+        this.computerPlayer.setStrategy(strategy);
+    }
+
     public boolean getIsHumanTurn()
     {
         return isHumanTurn;
@@ -179,6 +181,7 @@ public class NimGame
     {
         this.isHumanTurn = set;
     }
+
 
     /**
      * Gets the name of the current player.
