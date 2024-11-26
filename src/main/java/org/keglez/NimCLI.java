@@ -3,7 +3,7 @@ package org.keglez;
 import java.io.IOException;
 import java.util.Scanner;
 
-public class NimCLI extends NimController
+public class NimCLI
 {
     // Global Attributes
     private NimGame game;
@@ -178,7 +178,6 @@ public class NimCLI extends NimController
     /**
      * Handle making a move for the human or computer player
      */
-    @Override
     public void makeMove()
     {
         if (game.isHumanTurn())
@@ -206,7 +205,6 @@ public class NimCLI extends NimController
      * The next player to take marbles.
      * @param player - the player who turn it is next.
      */
-    @Override
     public void assignMoveFrom(Player player)
     {
         System.out.println("\nIt is " + player.getName() + "'s turn to play.");
@@ -250,7 +248,6 @@ public class NimCLI extends NimController
      *     <li>if it is the computers turn, the human wins.</li>
      * </ul>
      */
-    @Override
     public void announceWinner()
     {
         String winnerName;

@@ -18,7 +18,19 @@ public class YourStrategy implements MoveStrategy
     @Override
     public int NextMove(int currentPileCount)
     {
-       return (currentPileCount % 2) + 1;
+        return switch (currentPileCount) {
+            case  1 -> 1;
+            case  2 -> 2;
+            case  3 -> 1;
+            case  4 -> 1;
+            case  5 -> 2;
+            case  6 -> 1;
+            case  7 -> 2;
+            case  8 -> 1;
+            case  9 -> 2;
+            case 10 -> 1;
+            default -> throw new IllegalStateException("Unexpected value: " + currentPileCount);
+        };
     }
     
 }
