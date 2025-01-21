@@ -1,24 +1,21 @@
 package org.keglez;
 
-import org.keglez.nimgui.GameLoaderGUI;
-import org.keglez.nimgui.NimCanvas;
-
 import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Random;
 
 
 /**
- * This class generates a GUI version of the 1-2 Nim game.
+ * NimGUI class generates all user interface components for the NimGame class. Includes
+ * the NimCanvas class, which processes nim game graphics.
+ *
+ * @author Keegan Hinnigan
+ * @version 1.0
+ * @since 23/01/2025
  */
 public class NimGUI extends JFrame
 {
-    private JPanel gamePanel;
     private final JFrame frame;
     private final Border padding;
     private final TextArea gameLog;
@@ -30,29 +27,9 @@ public class NimGUI extends JFrame
     private JButton removeTwoButton;
 
 
-    private final NimCanvas     nim; // Game instance.
-    private NimGame             game;
+    private NimCanvas nim; // Game graphics
+    private NimGame game;
 
-
-    /**
-     * Append a new message to the game log.
-     * @param message To be displayed on the game log.
-     */
-    public void setGameLog(String message)
-    {
-        this.gameLog.append("\n" + message);
-    }
-
-    private void startGame()
-    {
-        // Setup players.
-        Player player1 = new Player("Human", new HumanUserStrategy());
-        Player player2 = new Player("Computer", new RandomStrategy());
-
-        // Initialize the game.
-        this.game = new NimGame(player1, player2);
-        game.setHumanTurn(true);
-    }
 
     /**
      * This method will generate the main GUI for the game.
@@ -68,11 +45,9 @@ public class NimGUI extends JFrame
         this.toolBar = new JToolBar();
         this.toolBar.setFloatable(false);
 
-
-        // Setup game panel.
+        // Setup game graphics.
         nim = new NimCanvas(500, 400);
         nim.setBorder(padding);
-
 
         // Setup game log.
         this.gameLog = new TextArea("Welcome to 1-2 nim!");
@@ -92,7 +67,6 @@ public class NimGUI extends JFrame
         frame.add(nim, BorderLayout.CENTER);
         frame.add(gameLog, BorderLayout.SOUTH);
 
-
         // Disable the undo button on fresh launch.
         setUndoButton();
 
@@ -104,6 +78,20 @@ public class NimGUI extends JFrame
         frame.setResizable(false);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    /**
+     * Start the game.
+     */
+    private void startGame()
+    {
+        // Setup players.
+        Player player1 = new Player("Human", new HumanUserStrategy());
+        Player player2 = new Player("Computer", new RandomStrategy());
+
+        // Initialize the game.
+        this.game = new NimGame(player1, player2);
+        game.setIsHumanTurn(true);
     }
 
 
@@ -245,23 +233,24 @@ public class NimGUI extends JFrame
 
 
     /**
-     * Make a move.
-     * @param amount Number of matchsticks to remove.
+     *  Allow either the human or player to make a move.
+     *
+     *  @param amount Number of matchsticks to remove.
      */
     public void makeMove(int amount)
     {
-        if (game.isHumanTurn())
+        if (game.getIsHumanTurn())
         {
-            game.setHumanTurn(true);
+            game.setIsHumanTurn(true);
 
             game.assignMove(amount);
             nim.removeMatchStick(amount);
 
-            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + amount + " marbles.");
+            setGameLog("\n" + game.getCurrentPlayerName() + " takes " + amount + " marbles.");
 
             // Make sure that the user cannot remove two matchsticks
             // if there is one left.
-            if(game.getMarbleSize() == 1)
+            if(game.getMatchStickSize() == 1)
             {
                 this.removeTwoButton.setEnabled(false);
             }
@@ -281,9 +270,9 @@ public class NimGUI extends JFrame
         }
         else
         {
-            game.setHumanTurn(false);
+            game.setIsHumanTurn(false);
 
-            int move = game.getComputerPlayer().getMove(game.getMarbleSize());
+            int move = game.getComputerPlayer().getMove(game.getMatchStickSize());
 
             // Delay the computer.
             game.assignMove(move);
@@ -291,12 +280,12 @@ public class NimGUI extends JFrame
 
             // Make sure that the user cannot remove two matchsticks
             // if there is one left.
-            if (game.getMarbleSize() == 1)
+            if (game.getMatchStickSize() == 1)
             {
                 this.removeTwoButton.setEnabled(false);
             }
 
-            this.gameLog.append("\n" + game.getCurrentPlayerName() + " takes " + move + " marbles.");
+            setGameLog("\n" + game.getCurrentPlayerName() + " takes " + move + " marbles.");
 
             // Check if human is a winner.
             if (game.checkWinner())
@@ -313,7 +302,7 @@ public class NimGUI extends JFrame
 
 
     /**
-     * This method starts a new game.
+     *  This method starts a new game.
      */
     private void startNewGame()
     {
@@ -326,7 +315,7 @@ public class NimGUI extends JFrame
             nim.setWinner("");
 
             // Notify of new game to the game log.
-            gameLog.append("\nStarted new game!");
+            setGameLog("\nStarted new game!");
 
             // Set button states.
             this.removeOneButton.setEnabled(true);
@@ -359,11 +348,11 @@ public class NimGUI extends JFrame
                 this.game.loadGame(id);
 
                 // Manage canvas.
-                int matchsticks = game.getMarbleSize();
+                int matchsticks = game.getMatchStickSize();
                 this.nim.load(matchsticks);
 
                 // Notify of loaded save to the game log.
-                this.gameLog.append("\nLoaded save " + id + ".");
+                setGameLog("\nLoaded save " + id + ".");
 
                 // Set the undo button to its correct state.
                 this.setUndoButton();
@@ -371,7 +360,7 @@ public class NimGUI extends JFrame
             else
             {
                 // Notify that there was no save chosen to the game log.
-                this.gameLog.append("\nNo save chosen.");
+                setGameLog("\nNo save chosen.");
             }
         }
         catch (Exception e)
@@ -383,7 +372,7 @@ public class NimGUI extends JFrame
 
 
     /**
-     * This method saves the current game.
+     *  This method saves the current game.
      */
     private void saveGame()
     {
@@ -400,13 +389,18 @@ public class NimGUI extends JFrame
     }
 
     /**
-     * If there are 10 piles, disable the undo button.
-     * If there are less than 10 piles, enable the undo button.
-     * If there are 0 piles, disable the undo button.
+     * This method manages the undo button, and disables it where necessary.
+     *
+     * <ul>Method:</ul>
+     * <ul>
+     *     <li>If there are 10 piles, disable the undo button.</li>
+     *     <li>If there are less than 10 piles, enable the undo button.</li>
+     *     <li>If there are 0 piles, disable the undo button.</li>
+     * </ul>
      */
     private void setUndoButton()
     {
-        int pileSize = game.getMarbleSize();
+        int pileSize = game.getMatchStickSize();
 
         switch (pileSize)
         {
@@ -419,7 +413,7 @@ public class NimGUI extends JFrame
     }
 
     /**
-     * Undo the last move made by the user and computer.
+     *  This method undoes the last move made by the user and computer.
      */
     private void undoLastMove()
     {
@@ -427,7 +421,7 @@ public class NimGUI extends JFrame
         {
             // Call undo function and get new matchstick size.
             game.undoLastMove();
-            int pileSize = game.getMarbleSize();
+            int pileSize = game.getMatchStickSize();
 
             // Enable the undo button if the pile size is less than 10.
             setUndoButton();
@@ -444,7 +438,9 @@ public class NimGUI extends JFrame
 
 
     /**
-     * Sets the game mode/computer strategy.
+     *  Sets the game mode/computer strategy based on user input.
+     *
+     *  @param gameMode The <code>GameMode</code> to set.
      */
     private void setGameMode(GameMode gameMode)
     {
@@ -456,19 +452,16 @@ public class NimGUI extends JFrame
         {
             case GameMode.EASY:
                 strategy = new RandomStrategy();
-                this.gameLog.append("\nSet game mode to easy. (Random Moves)");
+                setGameLog("\nSet game mode to easy. (Random Moves)");
                 break;
-
             case MEDIUM:
-                strategy = new YourStrategy2();
-                this.gameLog.append("\nSet game mode to medium (Modulo).");
+                strategy = new ModuloStrategy();
+                setGameLog("\nSet game mode to medium (Modulo).");
                 break;
-
             case HARD:
-                strategy = new YourStrategy();
-                this.gameLog.append("\nSet game mode to hard. (Pre-Defined Path)");
+                strategy = new PreDefinedStrategy();
+                setGameLog("\nSet game mode to hard. (Pre-Defined Path)");
                 break;
-
             default:
                 throw new IllegalStateException("Unexpected value: " + gameMode);
         }
@@ -477,9 +470,27 @@ public class NimGUI extends JFrame
         game.setComputerPlayerStrategy(strategy);
     }
 
+    /**
+     * Append a new message to the game log.
+     *
+     * @param message Message to be displayed.
+     */
+    public void setGameLog(String message)
+    {
+        try
+        {
+            this.gameLog.append(message);
+        }
+        catch (Exception error)
+        {
+            System.out.println("An error occurred while appending to the game log:");
+            throw new RuntimeException(error);
+        }
+    }
+
 
     /**
-     * Exit the game.
+     *  Exit the game and close the window.
      */
     public void exitGame()
     {
@@ -497,11 +508,12 @@ public class NimGUI extends JFrame
 
 
     /**
-     * Main function will run the base for the GUI.
+     * Main function will run the GUI version of nim.
+     *
      * @param args takes any arguments for main.
      */
     public static void main(String[] args)
     {
-        NimGUI window = new NimGUI();
+        new NimGUI();
     }
 }
