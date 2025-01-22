@@ -57,7 +57,7 @@ public class NimCanvas extends JComponent
         try
         {
             // Create a new ArrayList of match sticks.
-            this.matchSticks = new ArrayList<MatchStick>();
+            this.matchSticks = new ArrayList<>();
 
             // Number of rows and spacing settings for the pyramid
             // For 10 match sticks use 4 rows.
@@ -194,6 +194,17 @@ public class NimCanvas extends JComponent
 
 
     /**
+     *  Return the graphics match sticks ArrayList.
+     *
+     * @return Match sticks ArrayList.
+     */
+    public ArrayList<MatchStick> getMatchSticks()
+    {
+        return this.matchSticks;
+    }
+
+
+    /**
      *  This method sets up the canvas after a saved came has been
      *  chosen to be loaded. It will not change the difficulty
      *  of the game, as this is a user preference and may be changed
@@ -313,6 +324,25 @@ public class NimCanvas extends JComponent
         catch (Exception error)
         {
             System.out.println("An error occurred while setting the winner:");
+            throw new RuntimeException(error);
+        }
+    }
+
+
+    /**
+     *  This method will return the winner's name.
+     *
+     *  @return Winners name.
+     */
+    public String getWinner()
+    {
+        try
+        {
+            return this.winner;
+        }
+        catch (Exception error)
+        {
+            System.out.println("An error occurred while getting the winner:");
             throw new RuntimeException(error);
         }
     }

@@ -303,7 +303,7 @@ public class NimCLI
 
 
     /**
-     * <p>Announce the winner at the end of the game.</p>
+     * Announce the winner at the end of the game.
      * <u>Method:</u>
      * <ul>
      *     <li>If it is the humans turn, the computer wins.</li>
