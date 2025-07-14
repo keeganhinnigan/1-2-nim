@@ -1,6 +1,6 @@
 # 1‑2‑Nim (Java)
 
-A fully object-oriented Java implementation of the classic 1-2 Nim game featuring both CLI and GUI interfaces, multiple strategies, save/load functionality, and robust testing. Developed using Java in the BlueJ IDE for our assignment.
+A fully object-oriented Java implementation of the classic 1-2 Nim game featuring both CLI and GUI interfaces, multiple strategies, save/load functionality, and robust testing. Developed using Java in the IntelliJ IDE for our assignment.
 
 ## Overview
 
